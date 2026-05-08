@@ -1,0 +1,80 @@
+name: skill-ci validate
+
+on:
+  workflow_call:
+    inputs:
+      skill_root:
+        description: "Diretorio raiz da skill dentro do repo (default: .)"
+        type: string
+        required: false
+        default: "."
+      is_meta_pack:
+        description: "Pula check de SKILL.md raiz (para meta-packs/installers)"
+        type: boolean
+        required: false
+        default: false
+      is_forensic:
+        description: "Marca repo como forense — pula validacao inteira (skip)"
+        type: boolean
+        required: false
+        default: false
+      release_validation:
+        description: "Roda sync 3-way quando ref e uma tag vX.Y.Z"
+        type: boolean
+        required: false
+        default: true
+
+jobs:
+  validate:
+    if: ${{ inputs.is_forensic == false }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout consumidor
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout skill-ci@v1
+        uses: actions/checkout@v4
+        with:
+          repository: QuickClaw-Skills/skill-ci
+          ref: v1
+          path: .skill-ci
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Permissoes scripts
+        run: chmod +x .skill-ci/scripts/*.sh .skill-ci/scripts/*.py
+
+      - name: Estrutura (SKILL.md + skill.json)
+        run: .skill-ci/scripts/check-structure.sh "${{ inputs.skill_root }}" "${{ inputs.is_meta_pack }}"
+
+      - name: Frontmatter SKILL.md
+        if: ${{ inputs.is_meta_pack == false }}
+        run: .skill-ci/scripts/check-frontmatter.py "${{ inputs.skill_root }}/SKILL.md"
+
+      - name: Forbidden files/dirs
+        run: .skill-ci/scripts/check-forbidden.sh "${{ inputs.skill_root }}"
+
+      - name: Secret scan
+        run: .skill-ci/scripts/check-secrets.sh "${{ inputs.skill_root }}"
+
+      - name: Paths absolutos
+        run: .skill-ci/scripts/check-abs-paths.sh "${{ inputs.skill_root }}"
+
+      - name: Syntax check (python/node/bash)
+        run: .skill-ci/scripts/check-syntax.sh "${{ inputs.skill_root }}"
+
+      - name: Release sync 3-way (so em tag)
+        if: ${{ inputs.release_validation == true && startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .skill-ci/scripts/check-release-sync.sh "${{ inputs.skill_root }}" "${{ github.ref_name }}"
