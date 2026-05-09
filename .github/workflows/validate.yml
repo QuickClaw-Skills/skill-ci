@@ -28,6 +28,11 @@ jobs:
   validate:
     if: ${{ inputs.is_forensic == false }}
     runs-on: ubuntu-latest
+    env:
+      # Forca runtime das actions para Node.js 24 (Node.js 20 deprecado em 2026-06-02).
+      # Quando actions/checkout, setup-node e setup-python forem atualizadas com suporte
+      # nativo a Node 24, esta linha pode ser removida.
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     steps:
       - name: Checkout consumidor
         uses: actions/checkout@v4
