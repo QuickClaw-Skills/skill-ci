@@ -19,8 +19,10 @@ PATTERNS=(
   'C:/Users/'
 )
 
-# Whitelist de paths de container/sistema legitimos (regex)
-ALLOWED='/home/node/'
+# Whitelist de paths de container/sistema legitimos (regex).
+# /home/node/ e /home/openclaw/ sao usuarios canonicos do container OpenClaw
+# em diferentes deployment models (containerizado QuickClaw vs bare-metal/systemd).
+ALLOWED='/home/(node|openclaw)/'
 
 EXCLUDES=(
   "--exclude-dir=.git"
