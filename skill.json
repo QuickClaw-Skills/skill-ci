@@ -1,0 +1,28 @@
+{
+  "name": "skill-ci-infra",
+  "version": "1.2.0",
+  "description": "Infraestrutura organizacional da org QuickClaw-Skills. Reusable GitHub Actions workflow consumido por todas as skills como CI/CD obrigatorio. NAO e skill instalavel pelo OpenClaw.",
+  "author": "QuickClaw Skills",
+  "license": "Proprietary",
+  "homepage": "https://github.com/QuickClaw-Skills/skill-ci",
+  "min_openclaw_version": "n/a",
+  "runtime": "github-actions",
+  "entry": ".github/workflows/validate.yml",
+  "permissions": {
+    "allow": [],
+    "elevated": [],
+    "deny": []
+  },
+  "dependencies": {
+    "bins": [],
+    "env": []
+  },
+  "pricing_tier": "free",
+  "tags": ["infra", "ci", "github-actions", "validation", "not-installable"],
+  "metadata": {
+    "skill_type": "infra",
+    "installable": false,
+    "purpose": "reusable-workflow",
+    "consumed_by": "all-skills-in-quickclaw-skills-org"
+  }
+}
