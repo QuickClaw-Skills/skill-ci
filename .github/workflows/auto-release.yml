@@ -1,0 +1,57 @@
+name: skill-ci auto-release
+
+on:
+  workflow_call:
+    inputs:
+      skill_root:
+        description: "Diretorio raiz da skill (default: .). Usado para validar version do skill.json."
+        type: string
+        required: false
+        default: "."
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout consumidor
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validar consistencia tag vs skill.json
+        env:
+          TAG: ${{ github.ref_name }}
+          SKILL_ROOT: ${{ inputs.skill_root }}
+        run: |
+          set -euo pipefail
+          tag_version="${TAG#v}"
+          skill_json="${SKILL_ROOT}/skill.json"
+          if [ ! -f "$skill_json" ]; then
+            echo "::warning::skill.json nao encontrado em $skill_json - pulando validacao."
+            exit 0
+          fi
+          declared=$(python3 -c "import json; print(json.load(open('$skill_json'))['version'])")
+          if [ "$declared" != "$tag_version" ]; then
+            echo "::error::tag $TAG nao bate com skill.json.version=$declared. Corrija antes de releasear."
+            exit 1
+          fi
+          echo "OK - tag $TAG bate com skill.json.version=$declared"
+
+      - name: Criar GitHub Release (idempotente)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG ja existe - skip (idempotente)."
+            exit 0
+          fi
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$TAG" \
+            --generate-notes
+          echo "Release $TAG criada."

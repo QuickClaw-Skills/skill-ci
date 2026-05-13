@@ -22,7 +22,24 @@ jobs:
 
 Pronto. Em todo push/PR/tag, a skill e validada.
 
-## Inputs
+### Auto-release em push de tag (recomendado)
+
+Adicione tambem `.github/workflows/release.yml`:
+
+```yaml
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    uses: QuickClaw-Skills/skill-ci/.github/workflows/auto-release.yml@v1
+```
+
+Em todo `git push --tags`, o workflow valida tag vs `skill.json.version` e cria a GitHub Release com release notes auto-geradas. Idempotente (skip se Release ja existe). Defesa contra o padrao "taggeei mas esqueci de criar release", que deixava versoes invisiveis pro cron `check-skills-updates`.
+
+## Inputs (validate.yml)
 
 | Input | Tipo | Default | Quando usar |
 |---|---|---|---|
