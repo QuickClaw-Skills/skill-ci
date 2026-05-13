@@ -1,0 +1,8 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    uses: QuickClaw-Skills/skill-ci/.github/workflows/auto-release.yml@v1
