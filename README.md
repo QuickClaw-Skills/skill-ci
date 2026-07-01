@@ -69,7 +69,7 @@ jobs:
 | Diretorios proibidos: `data/`, `tmp/`, `output/`, `node_modules/`, `.venv/`, `__pycache__/`, `agents/main/sessions/` | sim | Artefatos de runtime |
 | Arquivos proibidos: `.env*`, `*.bak`, `*.db`, `*.sqlite`, `*.pyc` | sim | |
 | Padroes de segredo: `sk-ant-*`, `sk-*` (OpenAI), `ghp_*`/`gho_*`, `AIza*`, `xox[baprs]-*`, RSA/EC/OPENSSH/PGP private key, `AKIA*` | sim | |
-| Paths absolutos: `/home/*/`, `/Users/*/`, `C:\Users\` | sim | Use `<!-- abs-path-ok -->` na linha para ignorar (apenas docs) |
+| Paths absolutos: `/home/*/`, `/Users/*/`, `C:\Users\` <!-- abs-path-ok --> | sim | Use `<!-- abs-path-ok -->` na linha para ignorar (apenas docs) |
 | Syntax: `python -m py_compile`, `node --check`, `bash -n` | sim | |
 | Release sync 3-way (`skill.json.version` == tag (sem `v`) == release title) | sim | So roda em push de tag `vX.Y.Z` |
 
@@ -91,6 +91,34 @@ SKILL_ROOT=. bash /path/to/skill-ci/scripts/check-structure.sh "$SKILL_ROOT" fal
 bash /path/to/skill-ci/scripts/check-forbidden.sh "$SKILL_ROOT"
 # etc.
 ```
+
+## Exemplos de uso
+
+### Skill consumidora padrão
+
+**Entrada** (`.github/workflows/ci.yml`):
+
+```yaml
+jobs:
+  validate:
+    uses: QuickClaw-Skills/skill-ci/.github/workflows/validate.yml@v1
+```
+
+**Saída esperada:** o workflow valida estrutura, frontmatter, artefatos proibidos, secrets, paths absolutos e sintaxe da skill em cada push/PR.
+
+### Skill em subdiretório
+
+**Entrada** (`.github/workflows/ci.yml`):
+
+```yaml
+jobs:
+  validate:
+    uses: QuickClaw-Skills/skill-ci/.github/workflows/validate.yml@v1
+    with:
+      skill_root: skills/minha-skill
+```
+
+**Saída esperada:** os checks rodam contra `skills/minha-skill` em vez da raiz do repositório.
 
 ## License
 

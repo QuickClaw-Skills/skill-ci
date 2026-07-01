@@ -39,8 +39,9 @@ EXCLUDES=(
 for pattern in "${PATTERNS[@]}"; do
   HITS=$(grep -rEn "${EXCLUDES[@]}" "$pattern" . 2>/dev/null || true)
   if [[ -n "$HITS" ]]; then
-    # Filtra linhas marcadas com <!-- abs-path-ok --> e paths de container permitidos
-    FILTERED=$(echo "$HITS" | grep -v 'abs-path-ok' | grep -Ev "$ALLOWED" || true)
+    # Filtra linhas marcadas com <!-- abs-path-ok -->, paths de container permitidos
+    # e a propria definicao de patterns deste checker (evita falso positivo no skill-ci).
+    FILTERED=$(echo "$HITS" | grep -v 'abs-path-ok' | grep -Ev "$ALLOWED" | grep -vE '^\./scripts/check-abs-paths\.sh:[0-9]+:' || true)
     if [[ -n "$FILTERED" ]]; then
       echo "::error::Path absoluto do host detectado [$pattern]:"
       echo "$FILTERED" | sed 's/^/  /'
