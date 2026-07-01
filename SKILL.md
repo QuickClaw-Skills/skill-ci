@@ -41,7 +41,7 @@ jobs:
 2. **Frontmatter:** YAML valido com `name` + `description`
 3. **Forbidden files/dirs:** bloqueia `.env`, `data/`, `tmp/`, `output/`, `__pycache__/`, `node_modules/`, `.venv/`, etc.
 4. **Secret scan:** padroes Anthropic, OpenAI, GitHub, Google, Slack, AWS, private keys
-5. **Paths absolutos:** rejeita `/home/USER/`, `/Users/USER/`, `C:\Users\` (whitelist `/home/node/` e `/home/openclaw/` — usuarios canonicos do container OpenClaw)
+5. **Paths absolutos:** rejeita `/home/USER/`, `/Users/USER/`, `C:\Users\` <!-- abs-path-ok --> (whitelist `/home/node/` e `/home/openclaw/` — usuarios canonicos do container OpenClaw)
 6. **Syntax check:** `python -m py_compile`, `node --check`, `bash -n`
 7. **Sync 3-way em tag:** valida que `skill.json.version` == git tag (sem `v`) == release title (so dispara em push de tag `vX.Y.Z`)
 
@@ -65,6 +65,20 @@ Se o usuario perguntar sobre `skill-ci`, explicar que:
 Auditorias automatizadas da org checam `SKILL.md raiz` como criterio basico. Sem este arquivo, auditores classificam como P0 (nao descobrivel pelo OpenClaw). Este SKILL.md serve de **marker descritivo** que satisfaz o check estrutural mantendo a semantica clara: NAO instalavel.
 
 Para auditores: filtrar `metadata.skill_type: "infra"` OU repos com nome `skill-ci` para excluir de relatorios de skills consumiveis.
+
+## Exemplos de uso
+
+### Validar uma skill padrão
+
+**Entrada:** repo de skill com `.github/workflows/ci.yml` chamando `QuickClaw-Skills/skill-ci/.github/workflows/validate.yml@v1`.
+
+**Saída esperada:** GitHub Actions executa os 7 checks e falha o PR se houver arquivo proibido, segredo, path absoluto de host ou erro de sintaxe.
+
+### Validar uma skill em subdiretório
+
+**Entrada:** workflow consumidor com `with: skill_root: skills/minha-skill`.
+
+**Saída esperada:** os checks são aplicados somente ao subdiretório informado, mantendo monorepos compatíveis com o padrão da org.
 
 ## Versionamento
 
