@@ -1,3 +1,12 @@
+## v1.4.1 - 2026-07-01
+
+## CI/audit fixes
+
+- Fixed absolute-path checker self-match false positives.
+- Standardized metadata/docs according to the audit findings.
+
+Version bump: v1.4.0 -> v1.4.1.
+
 ## v1.2.2 — 2026-05-09
 
 > Bump: PATCH
