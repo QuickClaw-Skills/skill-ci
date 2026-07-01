@@ -123,3 +123,38 @@ jobs:
 ## License
 
 Proprietary — uso interno QuickClaw.
+
+
+## Release bump automation
+
+Use `scripts/release-bump.py` to create a consistent patch/minor/major release for a skill repository.
+
+Safe dry-run:
+
+```bash
+python3 scripts/release-bump.py --root /path/to/skill --bump patch --dry-run
+```
+
+Full release flow after a PR is merged:
+
+```bash
+python3 scripts/release-bump.py \
+  --root /path/to/skill \
+  --bump patch \
+  --note "Runtime/cron hardening." \
+  --commit \
+  --tag \
+  --push \
+  --github-release
+```
+
+The script:
+
+- updates `skill.json.version`;
+- prepends `RELEASE_NOTES.md` or `CHANGELOG.md`;
+- commits `chore: release vX.Y.Z` when `--commit` is set;
+- creates/pushes tag `vX.Y.Z` when `--tag --push` are set;
+- creates an idempotent GitHub Release when `--github-release` is set;
+- expects `GH_TOKEN`, `GITHUB_TOKEN`, or `GITHUB_SKILLS` for GitHub API writes.
+
+For org-wide batches, run it repo-by-repo after merges and before MQC/Supabase promotion.
