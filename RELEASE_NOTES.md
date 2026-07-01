@@ -1,3 +1,7 @@
+## v1.4.2 - 2026-07-01
+
+Add canonical release-bump automation for QuickClaw Skills.
+
 ## v1.4.1 - 2026-07-01
 
 ## CI/audit fixes

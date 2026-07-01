@@ -141,7 +141,11 @@ def main() -> None:
     run(["python3", "-m", "json.tool", "skill.json"], cwd=root)
 
     if args.commit:
-        run(["git", "add", "skill.json", "RELEASE_NOTES.md", "CHANGELOG.md"], cwd=root, check=False)
+        paths = ["skill.json"]
+        for candidate in ("RELEASE_NOTES.md", "CHANGELOG.md"):
+            if (root / candidate).exists():
+                paths.append(candidate)
+        run(["git", "add", *paths], cwd=root)
         run(["git", "commit", "-m", f"chore: release {tag}"], cwd=root)
 
     if args.tag:

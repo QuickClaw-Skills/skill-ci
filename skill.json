@@ -1,6 +1,6 @@
 {
   "name": "skill-ci-infra",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Infraestrutura organizacional da org QuickClaw-Skills. Reusable GitHub Actions workflow consumido por todas as skills como CI/CD obrigatorio. NAO e skill instalavel pelo OpenClaw.",
   "author": "QuickClaw-Skills",
   "license": "Proprietary",
