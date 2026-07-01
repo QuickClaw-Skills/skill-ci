@@ -91,3 +91,16 @@ Politica completa: `skill-builder/resources/release-management.md`.
 ## License
 
 Proprietary — uso interno da org QuickClaw-Skills. Ver `LICENSE`.
+
+
+## Release automation
+
+When a QuickClaw skill PR is merged and the package must be published, use `scripts/release-bump.py` from this skill-ci repository.
+
+Recommended patch flow:
+
+```bash
+python3 scripts/release-bump.py --root /path/to/skill --bump patch --commit --tag --push --github-release
+```
+
+Use `--dry-run` first for safety. Do not create a release before the code is merged into the target branch.
