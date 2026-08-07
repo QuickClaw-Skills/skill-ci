@@ -78,6 +78,14 @@ jobs:
       - name: Syntax check (python/node/bash)
         run: .skill-ci/scripts/check-syntax.sh "${{ inputs.skill_root }}"
 
+      # O self-test roda ANTES do check valer nota: um checker que virou no-op
+      # passa tudo em silencio, que e o defeito que ele existe para impedir.
+      - name: Wrapper exit code — self-test do checker
+        run: .skill-ci/scripts/check-wrapper-exit-code.py --self-test
+
+      - name: Wrapper exit code (wrapper nao pode engolir falha do filho)
+        run: .skill-ci/scripts/check-wrapper-exit-code.py "${{ inputs.skill_root }}"
+
       - name: References hint (docs longas fora de references/)
         if: ${{ inputs.is_meta_pack == false }}
         run: .skill-ci/scripts/check-references-hint.sh "${{ inputs.skill_root }}"

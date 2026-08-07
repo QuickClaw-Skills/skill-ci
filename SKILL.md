@@ -35,7 +35,7 @@ jobs:
 
 ## Validacoes implementadas
 
-7 checks por skill consumidora:
+8 checks por skill consumidora:
 
 1. **Estrutura:** `SKILL.md` raiz + `skill.json` valido + semver
 2. **Frontmatter:** YAML valido com `name` + `description`
@@ -43,7 +43,40 @@ jobs:
 4. **Secret scan:** padroes Anthropic, OpenAI, GitHub, Google, Slack, AWS, private keys
 5. **Paths absolutos:** rejeita `/home/USER/`, `/Users/USER/`, `C:\Users\` <!-- abs-path-ok --> (whitelist `/home/node/` e `/home/openclaw/` — usuarios canonicos do container OpenClaw)
 6. **Syntax check:** `python -m py_compile`, `node --check`, `bash -n`
-7. **Sync 3-way em tag:** valida que `skill.json.version` == git tag (sem `v`) == release title (so dispara em push de tag `vX.Y.Z`)
+7. **Wrapper exit code:** o wrapper nao pode engolir a falha do processo filho — ver abaixo
+8. **Sync 3-way em tag:** valida que `skill.json.version` == git tag (sem `v`) == release title (so dispara em push de tag `vX.Y.Z`)
+
+### Sobre o check 7 (wrapper exit code)
+
+O wrapper e o que o bot executa. Se ele descarta o `returncode` do filho, sai `0`
+com a skill quebrada e a falha chega ao agente como **sucesso** — analise sem dado
+nenhum apresentada como resultado valido. Aconteceu em cinco skills da org em
+agosto/2026, por meses, sem sinal em log nem alerta.
+
+Analisa `skill.json.entry` (quando `.py`) e arquivos `run.py`/`run_skill.py`/
+`wrapper.py`/`entrypoint.py`, via **AST** — a pergunta "o resultado foi descartado?"
+e estrutural, e regex sobre codigo produz falso-positivo.
+
+| Forma | Veredito |
+|---|---|
+| `r = subprocess.run(...)` | OK — capturado, da pra inspecionar |
+| `subprocess.run(..., check=True)` | OK — levanta sozinho |
+| `subprocess.check_call/check_output(...)` | OK — levantam por definicao |
+| `return subprocess.run(...)` | OK — quem chamou decide |
+| `sys.exit(subprocess.run(...).returncode)` | OK — propagado |
+| `subprocess.Popen(...)` | fora do escopo — lancamento assincrono e outro padrao |
+| `subprocess.run(...)` solto | **FALHA** |
+| `helper(...)` solto, quando `helper` devolve um lancamento | **FALHA** (uma indirecao ja escondeu o defeito na pratica) |
+
+Escape hatch consciente, na linha da chamada:
+
+```python
+subprocess.run([...])  # exit-code-ok: fire-and-forget, saida irrelevante aqui
+```
+
+O checker se testa: `check-wrapper-exit-code.py --self-test` roda 15 fixtures e
+e executado no CI **antes** do check valer nota — checker que virou no-op passa
+tudo em silencio, que e exatamente o defeito que ele existe para impedir.
 
 ## Inputs configuraveis (workflow_call)
 
