@@ -101,7 +101,9 @@ for line in fm_raw.splitlines():
     mm = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$", line)
     if mm:
         current_key = mm.group(1)
-        fields[current_key] = mm.group(2).strip()
+        value = mm.group(2).strip()
+        # Marcador de bloco (`>-`, `|`...) nao e texto: o valor vem nas linhas de baixo.
+        fields[current_key] = "" if re.fullmatch(r"[|>](?:[1-9][+-]?|[+-][1-9]?)?", value) else value
     elif current_key and (line.startswith(" ") or line.startswith("\t")):
         fields[current_key] = (fields[current_key] + " " + line.strip()).strip()
 
