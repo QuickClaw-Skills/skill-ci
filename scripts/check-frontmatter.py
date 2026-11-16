@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
-"""check-frontmatter.py <SKILL.md path>
+"""check-frontmatter.py [--yaml-only] <SKILL.md path>
 Valida frontmatter YAML do SKILL.md: presenca, parse, campos obrigatorios,
 formato do name, cross-check com skill.json.name e tamanho do body.
+
+--yaml-only: so presenca do frontmatter + YAML estrito (escalar sem aspas). Usado em todo
+SKILL.md do repo, inclusive sub-skills de pack, onde as demais regras nao se aplicam.
 """
 import json
 import os
 import re
 import sys
 
-if len(sys.argv) < 2:
-    print("::error::uso: check-frontmatter.py <path/SKILL.md>")
+args = sys.argv[1:]
+yaml_only = "--yaml-only" in args
+args = [a for a in args if a != "--yaml-only"]
+if len(args) < 1:
+    print("::error::uso: check-frontmatter.py [--yaml-only] <path/SKILL.md>")
     sys.exit(2)
 
-path = sys.argv[1]
+path = args[0]
 if not os.path.isfile(path):
     print(f"::error::SKILL.md nao encontrado: {path}")
     sys.exit(1)
@@ -27,6 +33,64 @@ if not m:
 
 fm_raw = m.group(1)
 
+# YAML estrito sem PyYAML, na regra que o OpenClaw 2026.10+ aplica de fato (markdown-core/frontmatter.ts):
+# num escalar sem aspas (plain), ': ' e YAML invalido. O OpenClaw so RECUPERA quando o erro cai na
+# linha da propria chave de um campo de texto livre de nivel 0 (description, read_when, summary): poe
+# o valor entre aspas e reparseia. ': ' numa LINHA DE CONTINUACAO (ou em outro campo) nao tem
+# recuperacao e a skill e PULADA no load, sem erro visivel ao cliente. Caso real: description de
+# varias linhas com "Keywords: CEP, ..." (quickclaw#470).
+PLAIN_START_EXCLUDED = ('"', "'", "|", ">", "[", "{", "&", "*", "!")
+RECOVERED_FIELDS = {"description", "read_when", "summary"}
+FIX_HINT = "Use '{key}: >-' (bloco dobrado, mesmo texto nas linhas de baixo) ou aspas."
+
+
+def plain_scalar_issues(raw):
+    """(erros, avisos) de ': ' em escalar sem aspas."""
+    errs, warns = [], []
+    lines = raw.splitlines()
+    i = 0
+    while i < len(lines):
+        km = re.match(r"^(\s*)([A-Za-z_][A-Za-z0-9_-]*)\s*:[ 	]+(\S.*)$", lines[i])
+        if not km or km.group(3).startswith(PLAIN_START_EXCLUDED):
+            i += 1
+            continue
+        indent, key, value = len(km.group(1)), km.group(2), km.group(3)
+        j = i + 1
+        while j < len(lines) and lines[j].strip() and len(lines[j]) - len(lines[j].lstrip()) > indent:
+            j += 1
+        colon = re.compile(r":(\s|$)")
+        bad_cont = next((k for k in range(i + 1, j) if colon.search(lines[k].strip())), None)
+        if bad_cont is not None:
+            errs.append(
+                f"frontmatter.{key} (linha {bad_cont + 1} do frontmatter): linha de continuacao de valor sem "
+                f"aspas contem ': ' -- o OpenClaw 2026.10+ nao recupera e PULA a skill. " + FIX_HINT.format(key=key)
+            )
+        elif colon.search(value):
+            if indent == 0 and key in RECOVERED_FIELDS:
+                warns.append(
+                    f"frontmatter.{key}: valor sem aspas contem ': ' (YAML invalido; o OpenClaw 2026.10+ "
+                    f"recupera este caso, mas nao conte com isso). " + FIX_HINT.format(key=key)
+                )
+            else:
+                errs.append(
+                    f"frontmatter.{key} (linha {i + 1} do frontmatter): valor sem aspas contem ': ' -- YAML "
+                    f"invalido, sem recuperacao no OpenClaw 2026.10+. " + FIX_HINT.format(key=key)
+                )
+        i = j
+    return errs, warns
+
+
+strict_errors, strict_warnings = plain_scalar_issues(fm_raw)
+for w in strict_warnings:
+    print(f"::warning::{path}: {w}")
+if yaml_only:
+    for e in strict_errors:
+        print(f"::error::{path}: {e}")
+    if strict_errors:
+        sys.exit(1)
+    print(f"OK: frontmatter YAML estrito ({path})")
+    sys.exit(0)
+
 # Parse minimo sem PyYAML (evita dependencia). Aceita 'key: value' e blocos
 # multi-linha indentados.
 fields = {}
@@ -37,11 +101,13 @@ for line in fm_raw.splitlines():
     mm = re.match(r"^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$", line)
     if mm:
         current_key = mm.group(1)
-        fields[current_key] = mm.group(2).strip()
+        value = mm.group(2).strip()
+        # Marcador de bloco (`>-`, `|`...) nao e texto: o valor vem nas linhas de baixo.
+        fields[current_key] = "" if re.fullmatch(r"[|>](?:[1-9][+-]?|[+-][1-9]?)?", value) else value
     elif current_key and (line.startswith(" ") or line.startswith("\t")):
         fields[current_key] = (fields[current_key] + " " + line.strip()).strip()
 
-errors = []
+errors = list(strict_errors)
 if not fields.get("name"):
     errors.append("frontmatter sem campo 'name'.")
 if not fields.get("description"):

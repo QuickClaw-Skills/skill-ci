@@ -66,6 +66,11 @@ jobs:
         if: ${{ inputs.is_meta_pack == false }}
         run: .skill-ci/scripts/check-frontmatter.py "${{ inputs.skill_root }}/SKILL.md"
 
+      - name: Frontmatter YAML estrito (todo SKILL.md, inclusive sub-skills)
+        run: |
+          find "${{ inputs.skill_root }}" -name SKILL.md -not -path '*/node_modules/*' -not -path '*/.git/*' -print0 \
+            | xargs -0 -r -n1 .skill-ci/scripts/check-frontmatter.py --yaml-only
+
       - name: Forbidden files/dirs
         run: .skill-ci/scripts/check-forbidden.sh "${{ inputs.skill_root }}"
 
