@@ -1,3 +1,15 @@
+## v1.6.0 - 2026-11-16
+
+> Bump: MINOR
+> Compatibilidade: adição. Nenhum repo da org fica vermelho depois de skill-personal-assistant v1.2.2 e skill-builder v2.5.1.
+
+### Added
+- `check-frontmatter.py`: frontmatter YAML estrito, com a regra do OpenClaw 2026.10+ (`packages/markdown-core/src/frontmatter.ts` da v2026.10.10). `": "` numa linha de continuação de valor sem aspas reprova (o OpenClaw pula a skill); na linha da chave de `description`/`read_when`/`summary` vira aviso (o OpenClaw recupera); na linha da chave de outro campo reprova.
+- Modo `--yaml-only`, e um passo novo no `validate.yml` que o roda em **todo** `SKILL.md` do repo, sub-skills de pack inclusive.
+
+### Validation
+- Os 42 `SKILL.md` dos 22 repos da org contra a lib `yaml` 2.9.1: com os dois fixes publicados, 0 erros; 5 avisos (`description` de linha única com `": "`, carregadas pelo 10.10). Ref: mrdornellesf/quickclaw#470.
+
 ## v1.5.0 - 2026-08-07
 
 ## Check novo: wrapper nao pode engolir a falha do processo filho
